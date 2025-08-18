@@ -8,6 +8,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+const authRoutes = require("./routes/authRoutes");
+const airtableRoutes = require("./routes/airtableRoutes");
+
+app.use("/auth/airtable", authRoutes);
+app.use("/api/airtable", airtableRoutes);
+
 const port = process.env.PORT || 4000;
 
 connectDB().then(() => {
