@@ -27,7 +27,9 @@ const FormBuilder = () => {
   // Fetch tables when a base is selected
   useEffect(() => {
     if (selectedBase) {
-      fetch(`${process.env.REACT_APP_BASE_URL}/api/airtable/tables/${userId}/${selectedBase.id}`)
+      fetch(
+        `${process.env.REACT_APP_BASE_URL}/api/airtable/tables/${userId}/${selectedBase.id}`
+      )
         .then((res) => res.json())
         .then((data) => setTables(data))
         .catch((err) => console.error(err));
@@ -52,13 +54,28 @@ const FormBuilder = () => {
     if (exists) {
       setQuestions(questions.filter((q) => q.id !== field.id));
     } else {
-      setQuestions([...questions, { ...field, label: field.name, conditions: [] }]);
+      setQuestions([
+        ...questions,
+        { ...field, label: field.name, conditions: [] },
+      ]);
     }
   };
 
   const updateLabel = (id, label) => {
+    setQuestions(questions.map((q) => (q.id === id ? { ...q, label } : q)));
+  };
+
+  // Add conditional logic for a question
+  const addCondition = (questionId, triggerQuestionId, value) => {
     setQuestions(
-      questions.map((q) => (q.id === id ? { ...q, label } : q))
+      questions.map((q) =>
+        q.id === questionId
+          ? {
+              ...q,
+              conditions: [...q.conditions, { triggerQuestionId, value }],
+            }
+          : q
+      )
     );
   };
 
@@ -135,6 +152,47 @@ const FormBuilder = () => {
                     onChange={(e) => updateLabel(q.id, e.target.value)}
                     className="border p-2 rounded w-full"
                   />
+                  {/* Conditional Logic */}
+                  <div className="mt-2">
+                    <h3 className="font-semibold mb-1">Conditional Logic</h3>
+                    {questions
+                      .filter((prev) => prev.id !== q.id)
+                      .map((prev) => (
+                        <div
+                          key={prev.id}
+                          className="flex items-center mb-2 space-x-2"
+                        >
+                          <span>{prev.label} = </span>
+                          <input
+                            type="text"
+                            placeholder="Value"
+                            className="border p-1 rounded flex-1"
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                addCondition(q.id, prev.id, e.target.value);
+                                e.target.value = "";
+                              }
+                            }}
+                          />
+                        </div>
+                      ))}
+
+                    {q.conditions.length > 0 && (
+                      <ul className="text-sm mt-2">
+                        {q.conditions.map((c, idx) => (
+                          <li key={idx}>
+                            Show if{" "}
+                            {
+                              questions.find(
+                                (ques) => ques.id === c.triggerQuestionId
+                              )?.label
+                            }{" "}
+                            = {c.value}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
