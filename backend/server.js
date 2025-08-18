@@ -11,10 +11,14 @@ app.use(express.json());
 const authRoutes = require("./routes/authRoutes");
 const airtableRoutes = require("./routes/airtableRoutes");
 const formRoutes = require("./routes/formRoutes");
+const responseControllerRoutes = require("./routes/responseRoutes");
+
 
 app.use("/auth/airtable", authRoutes);
 app.use("/api/airtable", airtableRoutes);
 app.use("/api/forms", formRoutes);
+app.use("/api/response", responseControllerRoutes);
+
 
 const port = process.env.PORT || 4000;
 
