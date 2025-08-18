@@ -12,12 +12,14 @@ const authRoutes = require("./routes/authRoutes");
 const airtableRoutes = require("./routes/airtableRoutes");
 const formRoutes = require("./routes/formRoutes");
 const responseControllerRoutes = require("./routes/responseRoutes");
+const formViewerRoutes = require("./routes/formViewerRoutes");
 
 
 app.use("/auth/airtable", authRoutes);
 app.use("/api/airtable", airtableRoutes);
 app.use("/api/forms", formRoutes);
 app.use("/api/response", responseControllerRoutes);
+app.use("/api/form-viewer", formViewerRoutes);
 
 
 const port = process.env.PORT || 4000;
