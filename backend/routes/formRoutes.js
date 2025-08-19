@@ -1,17 +1,19 @@
 const express = require("express");
 const router = express.Router();
-const formController = require("../controllers/formController");
+const { createForm, updateForm, getForm, listForms, submitForm } = require("../controllers/formController");
 
 // Create a new form
-router.post("/", formController.createForm);
+router.post("/", createForm);
 
-// Get all forms of a user
-router.get("/user/:userId", formController.getFormsByUser);
+router.get("/", listForms);
 
-// Get a single form by ID
-router.get("/:formId", formController.getFormById);
+// Get form by ID
+router.get("/:formId", getForm);
 
 // Update a form
-router.put("/:formId", formController.updateForm);
+router.put("/:formId", updateForm);
+
+// submit form
+router.post("/:formId/submit", submitForm);
 
 module.exports = router;

@@ -9,6 +9,6 @@ router.get("/bases/:userId", airtableController.getBases);
 router.get("/tables/:userId/:baseId", airtableController.getTables);
 
 // Get all fields for a table
-router.get("/fields/:userId/:baseId/:tableId", airtableController.getFileds);
+router.get("/fields/:userId/:baseId/:tableId", airtableController.getFields);
 
 module.exports = router;

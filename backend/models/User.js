@@ -1,10 +1,12 @@
 const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema({
-    airtableId: String,
+    airtableId: { type: String, index: true },
     name: String,
     email: String,
-    accessToken: String
+    accessToken: String,
+    refreshToken: String,
+    tokenExpiresAt: Date
 },
 {
     timestamps: true
