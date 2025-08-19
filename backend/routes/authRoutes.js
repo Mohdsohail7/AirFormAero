@@ -8,4 +8,7 @@ router.get("/airtable", authController.redirectToAirtable );
 // OAuth callback
 router.get("/airtable/callback", authController.handleAirtableCallback);
 
+// Get current user by id
+router.get("/me", authController.getCurrentUser);
+
 module.exports = router;

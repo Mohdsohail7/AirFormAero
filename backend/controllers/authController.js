@@ -1,45 +1,39 @@
-const axios = require("axios");
 const crypto = require("crypto");
 const User = require("../models/User");
+const { endpoints, exchangeCodeForToken, getWhoAmI } = require("../utils/airtable");
 
 const {
   AIRTABLE_CLIENT_ID: CLIENT_ID,
   AIRTABLE_CLIENT_SECRET: CLIENT_SECRET,
   BACKEND_URL,
-  FRONTEND_URL
+  FRONTEND_URL,
 } = process.env;
 
-const OAUTH_AUTHORIZE = "https://airtable.com/oauth2/v1/authorize";
-const OAUTH_TOKEN = "https://airtable.com/oauth2/v1/token";
-
 function b64url(buf) {
-  return buf.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/,"");
+  return buf.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
-function generateCodeVerifier() {
-  return b64url(crypto.randomBytes(32));
-}
-function generateCodeChallenge(verifier) {
-  const hash = crypto.createHash("sha256").update(verifier).digest();
-  return b64url(hash);
+function genVerifier() { return b64url(crypto.randomBytes(32)); }
+function challenge(verifier) {
+  return b64url(crypto.createHash("sha256").update(verifier).digest());
 }
 
+// Step 1: redirect to Airtable OAuth
 exports.redirectToAirtable = (req, res) => {
-  const codeVerifier = generateCodeVerifier();
-  const codeChallenge = generateCodeChallenge(codeVerifier);
-  req.session.codeVerifier = codeVerifier;
-
-  // (optional) real random state + store it to verify later
+  const codeVerifier = genVerifier();
+  const codeChallenge = challenge(codeVerifier);
   const state = b64url(crypto.randomBytes(16));
+
+  req.session.codeVerifier = codeVerifier;
   req.session.oauthState = state;
 
   const scopes = [
     "data.records:read",
     "data.records:write",
     "schema.bases:read",
-    "user.email:read"
+    "user.email:read",
   ].join(" ");
 
-  const url = new URL(OAUTH_AUTHORIZE);
+  const url = new URL(endpoints.OAUTH_AUTHORIZE);
   url.searchParams.set("client_id", CLIENT_ID);
   url.searchParams.set("redirect_uri", `${BACKEND_URL}/auth/airtable/callback`);
   url.searchParams.set("response_type", "code");
@@ -48,73 +42,66 @@ exports.redirectToAirtable = (req, res) => {
   url.searchParams.set("state", state);
   url.searchParams.set("scope", scopes);
 
-  return res.redirect(url.toString());
+  res.redirect(url.toString());
 };
 
+// Step 2: callback → exchange code, save user, redirect to FE
 exports.handleAirtableCallback = async (req, res) => {
   try {
     const { code, state } = req.query;
-    const codeVerifier = req.session.codeVerifier;
-
     if (!code) return res.status(400).send("Missing authorization code");
-    if (!codeVerifier) return res.status(400).send("Session expired: no code_verifier");
-    if (!state || state !== req.session.oauthState) {
-      return res.status(400).send("Invalid OAuth state");
-    }
+    if (state !== req.session.oauthState) return res.status(400).send("Invalid OAuth state");
+    if (!req.session.codeVerifier) return res.status(400).send("No PKCE code_verifier");
 
-    // --- Exchange code for tokens (use Basic Auth for client credentials) ---
-    const body = new URLSearchParams({
-      grant_type: "authorization_code",
+    const tokens = await exchangeCodeForToken({
+      clientId: CLIENT_ID,
+      clientSecret: CLIENT_SECRET,
       code,
-      redirect_uri: `${BACKEND_URL}/auth/airtable/callback`,
-      code_verifier: codeVerifier
+      redirectUri: `${BACKEND_URL}/auth/airtable/callback`,
+      codeVerifier: req.session.codeVerifier,
     });
 
-    const tokenRes = await axios.post(OAUTH_TOKEN, body.toString(), {
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        "Authorization":
-          "Basic " + Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString("base64")
-      },
-      timeout: 10000
-    });
+    if (!tokens?.access_token) return res.status(500).send("Token exchange failed");
 
-    const { access_token, refresh_token, expires_in, token_type } = tokenRes.data;
-    if (!access_token || token_type?.toLowerCase() !== "bearer") {
-      return res.status(500).send("Token exchange failed");
-    }
+    const me = await getWhoAmI(tokens.access_token);
 
-    // --- Me endpoint ---
-    const meRes = await axios.get("https://api.airtable.com/v0/meta/whoami", {
-    headers: { Authorization: `Bearer ${access_token}` },
-    timeout: 10000
-    });
-
-    const profile = meRes.data; // { id, name, email, ... }
-
-    // --- Upsert user ---
-    const tokenExpiresAt = new Date(Date.now() + (expires_in ?? 3600) * 1000);
-    const update = {
-      name: profile.name,
-      email: profile.email,
-      accessToken: access_token,
-      refreshToken: refresh_token,
-      tokenExpiresAt
-    };
     const user = await User.findOneAndUpdate(
-      { airtableId: profile.id },
-      update,
+      { airtableId: me.id },
+      {
+        name: me.name,
+        email: me.email,
+        accessToken: tokens.access_token,
+        refreshToken: tokens.refresh_token,
+        tokenExpiresAt: new Date(Date.now() + (tokens.expires_in ?? 3600) * 1000),
+      },
       { new: true, upsert: true, setDefaultsOnInsert: true }
     );
 
-    // clean up PKCE items
     delete req.session.codeVerifier;
     delete req.session.oauthState;
 
-    // hand off to frontend
-    return res.redirect(`${FRONTEND_URL}/dashboard?userId=${user._id}`);
+    res.redirect(`${process.env.FRONTEND_URL}/dashboard?userId=${user._id}`);
   } catch (err) {
-    console.error("OAuth error:", err?.response?.data ?? err.message);
-    return res.status(500).send("OAuth login failed");
+    console.error("OAuth error:", err?.response?.data || err.message);
+    res.status(500).send("OAuth login failed");
+  }
+};
+
+exports.getCurrentUser = async (req, res) => {
+  try {
+    const { userId } = req.query;
+    if (!userId) {
+      return res.status(400).send("Missing userId");
+    }
+
+    const user = await User.findById(userId).lean();
+    if (!user) {
+      return res.status(404).send("User not found");
+    }
+
+    res.json(user);
+  } catch (err) {
+    console.error("Get user error:", err.message);
+    res.status(500).send("Failed to fetch user");
   }
 };

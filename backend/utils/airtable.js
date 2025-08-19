@@ -69,6 +69,7 @@ exports.listBases = async (accessToken) => {
     headers: { Authorization: `Bearer ${accessToken}` },
     timeout: 15000,
   });
+  console.log("Airtable bases raw response:", res.data);
   return res.data?.bases || [];
 };
 
