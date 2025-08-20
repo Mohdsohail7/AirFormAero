@@ -14,8 +14,7 @@ function App() {
 
         {/* Dashboard */}
         <Route path="/dashboard" element={<Dashboard />} />
-
-        <Route path="/dashboard" element={<Dashboard />} />
+        
         <Route path="/form/:id" element={<FormPage />} />
         <Route path="/form/:id/submitted" element={<ThankYouPage />} />
       </Routes>
