@@ -22,4 +22,6 @@ export const updateForm = (id, data) => API.put(`/api/forms/${id}`, data);
 export const getForm = (id) => API.get(`/api/forms/${id}`);
 export const submitForm = (id, userId, answers) =>
   API.post(`/api/forms/${id}/submit?userId=${userId}`, { answers });
+export const listForms = (userId) =>
+  API.get(`/api/forms?ownerId=${userId}`);
 

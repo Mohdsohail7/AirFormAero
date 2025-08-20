@@ -23,11 +23,13 @@ app.use(session({
 const authRoutes = require("./routes/authRoutes");
 const airtableRoutes = require("./routes/airtableRoutes");
 const formRoutes = require("./routes/formRoutes");
+const uploadRoutes = require("./routes/uploadRoutes");
 
 
 app.use("/auth", authRoutes);
 app.use("/api/airtable", airtableRoutes);
 app.use("/api/forms", formRoutes);
+app.use("/api/upload", uploadRoutes);
 
 
 const port = process.env.PORT || 4000;

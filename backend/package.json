@@ -19,6 +19,7 @@
   "homepage": "https://github.com/Mohdsohail7/AirFormAero#readme",
   "dependencies": {
     "axios": "^1.11.0",
+    "cloudinary": "^2.7.0",
     "connect-mongo": "^5.1.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
@@ -26,7 +27,9 @@
     "express": "^5.1.0",
     "express-session": "^1.18.2",
     "mongoose": "^8.17.1",
-    "qs": "^6.14.0"
+    "multer": "^2.0.2",
+    "qs": "^6.14.0",
+    "streamifier": "^0.1.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"

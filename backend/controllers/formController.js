@@ -1,16 +1,20 @@
 const Form = require("../models/Form");
 const User = require("../models/User");
+const { createRecord } = require("../utils/airtable");
 
 
 
 // Create a new form
 exports.createForm = async (req, res) => {
     try {
-    const { ownerId } = req.body;
+    const { ownerId, ...rest } = req.body;
     const owner = await User.findById(ownerId);
     if (!owner) return res.status(400).json({ error: "OWNER_NOT_FOUND" });
 
-    const form = await Form.create(req.body);
+    const form = await Form.create({
+      ...rest,
+      owner: owner._id,
+    });
     res.status(201).json(form);
   } catch (e) {
     console.error(e);
@@ -70,10 +74,15 @@ exports.submitForm = async (req, res) => {
 
     const fields = {};
     for (const q of form.questions) {
-      if (req.body.answers.hasOwnProperty(q.fieldId)) {
-        fields[q.fieldId] = req.body.answers[q.fieldId];
-      }
+  if (req.body.answers.hasOwnProperty(q.fieldId)) {
+    let val = req.body.answers[q.fieldId];
+    if (q.fieldType === "attachment" && val) {
+      fields[q.fieldId] = [{ url: val }]; // ✅ wrap in array
+    } else {
+      fields[q.fieldId] = val;
     }
+  }
+}
 
     const result = await createRecord({
       accessToken: user.accessToken,
