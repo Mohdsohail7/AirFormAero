@@ -32,7 +32,7 @@ A form builder with **Airtable integration** that allows users to create, custom
 ```bash
 git clone https://github.com/Mohdsohail7/AirFormAero.git
 cd AirFormAero
-
+```
 ## 2. Backend Setup
 cd backend
 npm install
@@ -54,15 +54,16 @@ CLOUDINARY_API_SECRET=your_cloudinary_api_secret
 Run the backend:
 ```bash 
 npm run dev
-
+```
 ## 3. Frontend Setup
 ```bash
 cd frontend
 npm install
+```
 Create a .env file inside frontend/ with:
 ``` bash
 REACT_APP_BACKEND_URL=http://localhost:4000
-
+```
 Run the frontend:
 npm start
 
@@ -107,3 +108,7 @@ OAuth & API: Airtable API
 File Uploads: Cloudinary
 
 Session Handling: express-session + MongoDB
+
+📄 License
+
+This project is licensed under the ISC License.
