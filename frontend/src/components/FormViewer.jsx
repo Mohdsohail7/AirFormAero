@@ -61,7 +61,7 @@ export default function FormViewer({ form, onSubmit }) {
 
   return (
     <div className="max-w-xl mx-auto p-4">
-      {/* ✅ Fixed dynamic title */}
+      {/* Fixed dynamic title */}
       <h1 className="text-2xl font-bold mb-4">
         {form.title?.trim() || "Untitled Form"}
       </h1>

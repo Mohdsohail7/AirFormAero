@@ -96,13 +96,13 @@ export default function Dashboard() {
           fieldType = "multi_select";
           break;
         case "attachment":
-          fieldType = "attachment"; // ✅
+          fieldType = "attachment"; //
           break;
         default:
           fieldType = "short_text"; // fallback
       }
       return {
-        fieldId: q.id,
+        fieldId: q.id || `${q.name}-${Date.now()}-${Math.random()}`,
         fieldType,
         label: q.label || q.name,
         required: false,
@@ -122,7 +122,7 @@ export default function Dashboard() {
     };
 
     if (editingFormId) {
-      // ✅ Update existing form
+      // Update existing form
       updateForm(editingFormId, payload)
         .then((r) => {
           setForms((prev) =>
@@ -136,7 +136,7 @@ export default function Dashboard() {
           alert("Failed to update form. Check console for details.");
         });
     } else {
-      // ✅ Create new form
+      // Create new form
       createForm(payload)
         .then((r) => {
           setForms((prev) => [r.data, ...prev]);
@@ -149,54 +149,26 @@ export default function Dashboard() {
     }
   };
 
+  const handleDelete = async (formId) => {
+    if (!window.confirm("Are you sure you want to delete this form?")) return;
+
+    try {
+      await deleteForm(formId);
+      setForms((prev) => prev.filter((f) => f._id !== formId));
+    } catch (err) {
+      alert("Failed to delete form");
+    }
+  };
+
   if (loadingUser) return <Loader />;
   if (error) return <p className="text-red-500">{error}</p>;
 
   return (
     <div className="p-4">
       <h1 className="text-xl font-bold mb-4">
-        Welcome, {user?.name || "User"} 👋
+        Welcome, {user?.name || "User"}
       </h1>
       <p className="mb-6 text-gray-600">Email: {user?.email}</p>
-
-      {/* List of created forms */}
-      <div className="mb-8">
-        <h2 className="text-lg font-semibold mb-2">Your Forms</h2>
-        {forms.length === 0 ? (
-          <p className="text-gray-500">No forms yet.</p>
-        ) : (
-          <ul className="space-y-2">
-            {forms.map((form) => (
-              <li
-                key={form._id}
-                className="flex justify-between items-center border p-2 rounded"
-              >
-                <span>{form.title}</span>
-                <div className="space-x-3">
-                  <Link
-                    to={`/form/${form._id}?userId=${userId}`}
-                    className="text-blue-600 hover:underline"
-                  >
-                    Open
-                  </Link>
-                  <button
-                    onClick={() => {
-                      setEditingFormId(form._id);
-                      setBase({ id: form.baseId, name: form.baseName });
-                      setTable({ id: form.tableId, name: form.tableName });
-                      setQuestions(form.questions);
-                      setFormTitle(form.title); // prefill
-                    }}
-                    className="text-purple-600 hover:underline"
-                  >
-                    Edit
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
 
       {/* Form builder UI */}
       {!base && <BaseSelector bases={bases} onSelect={setBase} />}
@@ -215,7 +187,7 @@ export default function Dashboard() {
 
       {base && table && (
         <>
-          {/* Title + Description Inputs */}
+          {/* Title Inputs */}
           <input
             type="text"
             placeholder="Enter form title"
@@ -239,6 +211,52 @@ export default function Dashboard() {
           </button>
         </>
       )}
+
+      {/* List of created forms */}
+      <div className="mb-8">
+        <h2 className="text-lg font-semibold mb-2">Your Forms</h2>
+        {forms.length === 0 ? (
+          <p className="text-gray-500">No forms yet.</p>
+        ) : (
+          <ul className="space-y-2">
+            {forms.map((form) => (
+              <li
+                key={form._id}
+                className="flex justify-between items-center border p-2 rounded"
+              >
+                <span>{form.title}</span>
+                <div className="space-x-3">
+                  <Link
+                    to={`/form/${form._id}?userId=${userId}`}
+                    className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
+                  >
+                    Open
+                  </Link>
+                  <button
+                    onClick={() => {
+                      setEditingFormId(form._id);
+                      setBase({ id: form.baseId, name: form.baseName });
+                      setTable({ id: form.tableId, name: form.tableName });
+                      setQuestions(form.questions);
+                      setFormTitle(form.title); // prefill
+                    }}
+                    className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
+                  >
+                    Edit
+                  </button>
+                    {/* delete button */}
+                  <button
+                    onClick={() => handleDelete(form._id)}
+                    className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }

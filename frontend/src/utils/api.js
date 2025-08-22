@@ -24,4 +24,5 @@ export const submitForm = (id, userId, answers) =>
   API.post(`/api/forms/${id}/submit?userId=${userId}`, { answers });
 export const listForms = (userId) =>
   API.get(`/api/forms?ownerId=${userId}`);
+export const deleteForm = (formId) => API.delete(`/api/forms/${formId}`);
 

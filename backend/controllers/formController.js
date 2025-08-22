@@ -97,3 +97,26 @@ exports.submitForm = async (req, res) => {
     res.status(500).json({ error: "SUBMISSION_FAILED" });
   }
 };
+
+// Delete a form
+exports.deleteForm = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const form = await Form.findById(id);
+
+    if (!form) {
+      return res.status(404).json({ error: "Form not found" });
+    }
+
+    // Optional: Check ownership (only allow owner to delete)
+    if (req.query.ownerId && form.owner.toString() !== req.query.ownerId) {
+      return res.status(403).json({ error: "Not authorized to delete this form" });
+    }
+
+    await form.deleteOne();
+    res.json({ message: "Form deleted successfully" });
+  } catch (err) {
+    console.error("Delete form error:", err.message);
+    res.status(500).json({ error: "Failed to delete form" });
+  }
+};
