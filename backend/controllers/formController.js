@@ -74,15 +74,15 @@ exports.submitForm = async (req, res) => {
 
     const fields = {};
     for (const q of form.questions) {
-  if (req.body.answers.hasOwnProperty(q.fieldId)) {
-    let val = req.body.answers[q.fieldId];
-    if (q.fieldType === "attachment" && val) {
-      fields[q.fieldId] = [{ url: val }]; // ✅ wrap in array
-    } else {
-      fields[q.fieldId] = val;
+    if (req.body.answers.hasOwnProperty(q.fieldId)) {
+      let val = req.body.answers[q.fieldId];
+      if (q.fieldType === "attachment" && val) {
+        fields[q.fieldId] = [{ url: val }]; 
+      } else {
+        fields[q.fieldId] = val;
+      }
     }
   }
-}
 
     const result = await createRecord({
       accessToken: user.accessToken,
