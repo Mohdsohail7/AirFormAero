@@ -26,9 +26,25 @@ exports.createForm = async (req, res) => {
 // PUT /api/forms/:formId
 exports.updateForm = async (req, res) => {
   try {
-    const form = await Form.findByIdAndUpdate(req.params.formId, req.body, { new: true });
-    if (!form) return res.status(404).json({ error: "FORM_NOT_FOUND" });
-    res.json(form);
+    const existing = await Form.findById(req.params.formId);
+    if (!existing) return res.status(404).json({ error: "FORM_NOT_FOUND" });
+
+    // Ensure options don’t get wiped out
+    const mergedQuestions = req.body.questions.map((q, idx) => {
+      const oldQ = existing.questions[idx];
+      return {
+        ...q,
+        options: q.options && q.options.length > 0 ? q.options : oldQ?.options || [],
+      };
+    });
+
+    const updated = await Form.findByIdAndUpdate(
+      req.params.formId,
+      { ...req.body, questions: mergedQuestions },
+      { new: true }
+    );
+
+    res.json(updated);
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: "UPDATE_FORM_FAILED" });

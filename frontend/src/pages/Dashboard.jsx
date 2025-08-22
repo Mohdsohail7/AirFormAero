@@ -102,12 +102,22 @@ export default function Dashboard() {
         default:
           fieldType = "short_text"; // fallback
       }
+      const normalizedOptions =
+    fieldType === "single_select" || fieldType === "multi_select"
+      ? (q.options && q.options.length > 0
+          ? q.options.map((o) => ({
+              id: o.id || o.name, // ensure stable id
+              name: o.name || o,  // fallback if backend sent plain strings
+            }))
+          : [])
+      : [];
+
       return {
         fieldId: q.id || `${q.name}-${Date.now()}-${Math.random()}`,
         fieldType,
         label: q.label || q.name,
         required: false,
-        options: q.options || [],
+        options: normalizedOptions,
         showIf: [],
       };
     });
