@@ -8,6 +8,7 @@ import {
   createForm,
   updateForm,
   listForms,
+  deleteForm
 } from "../utils/api";
 import BaseSelector from "../components/BaseSelector";
 import TableSelector from "../components/TableSelector";

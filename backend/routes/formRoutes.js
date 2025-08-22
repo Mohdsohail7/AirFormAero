@@ -17,6 +17,6 @@ router.put("/:formId", updateForm);
 router.post("/:formId/submit", submitForm);
 
 // delete route
-router.delete("/:id", formController.deleteForm);
+router.delete("/:id", deleteForm);
 
 module.exports = router;
